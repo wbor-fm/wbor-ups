@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# This shell script if placed in /etc/apcupsd
+# will be called by /etc/apcupsd/apccontrol when the UPS
+# goes on batteries.
+#
+
+HOSTNAME=`hostname`
+MGMT_BOT_ID=""
+CLUBWIDE_BOT_ID=""
+GROUPME_API_URL="https://api.groupme.com/v3/bots/post"
+
+# Sleep for 15 minutes (900 seconds)
+sleep 900
+
+timeleft=$(sudo apcaccess -p TIMELEFT)
+
+(
+   echo "To: $SYSADMIN"
+   echo "From: wbor-smtp@bowdoin.edu"
+   echo "Subject: $timeleft remaining"
+   echo ""
+   echo "Estimated time remaining: $timeleft."
+) | sudo $APCUPSD_MAIL $SYSADMIN
+
+curl -s -X POST $GROUPME_API_URL \
+    -H "Content-Type: application/json" \
+    -d '{
+        "text": "Estimated time remaining: '"$timeleft"'",
+        "bot_id": "'"$MGMT_BOT_ID"'"
+    }'
+
+curl -s -X POST $GROUPME_API_URL \
+    -H "Content-Type: application/json" \
+    -d '{
+        "text": "Estimated time remaining: '"$timeleft"'",
+        "bot_id": "'"$CLUBWIDE_BOT_ID"'"
+    }'
+
+exit 0

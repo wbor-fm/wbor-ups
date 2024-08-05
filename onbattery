@@ -4,29 +4,39 @@
 # will be called by /etc/apcupsd/apccontrol when the UPS
 # goes on batteries.
 #
-# Send an email and GroupMe message.
+# Send an email and GroupMe message. After 15 minutes, send another message.
 #
 
 HOSTNAME=`hostname`
 MSG="$HOSTNAME UPS - Power Failure"
-GROUPME_BOT_ID=""
+MGMT_BOT_ID=""
+CLUBWIDE_BOT_ID=""
 GROUPME_API_URL="https://api.groupme.com/v3/bots/post"
-#
+
+timeleft=$(sudo apcaccess -p TIMELEFT)
+
 (
    echo "To: $SYSADMIN"
    echo "From: wbor-smtp@bowdoin.edu"
    echo "Subject: $MSG"
-   echo " "
-   echo "$MSG"
-   echo " "
-   /sbin/apcaccess status
+   echo ""
+   echo "It looks like either the power has gone out at the station or this UPS was unplugged. Battery backup will now be deployed. Estimated time remaining: $timeleft."
 ) | sudo $APCUPSD_MAIL $SYSADMIN
 
 curl -s -X POST $GROUPME_API_URL \
     -H "Content-Type: application/json" \
     -d '{
-        "text": "'"$MSG"'",
-        "bot_id": "'"$GROUPME_BOT_ID"'"
+        "text": "!!!\n\n'"$MSG"'\n\nIt looks like either the power has gone out at the station or this UPS was unplugged. Battery backup will now be deployed.\n\nEstimated time remaining: '"$timeleft"'",
+        "bot_id": "'"$MGMT_BOT_ID"'"
     }'
+
+curl -s -X POST $GROUPME_API_URL \
+    -H "Content-Type: application/json" \
+    -d '{
+        "text": "!!!\n\nStation Power Loss\n\nIt looks like either the power has gone out at the station or something was unplugged. Battery backup will now be deployed.\n\nEstimated time remaining: '"$timeleft"'",
+        "bot_id": "'"$CLUBWIDE_BOT_ID"'"
+    }'
+
+./fifteen &
 
 exit 0

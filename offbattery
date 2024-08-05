@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# This shell script if placed in /etc/apcupsd
+# will be called by /etc/apcupsd/apccontrol when the    
+# UPS goes back on to the mains after a power failure.
+#
+
+HOSTNAME=`hostname`
+MSG="$HOSTNAME UPS $1 Power has returned"
+MGMT_BOT_ID=""
+CLUBWIDE_BOT_ID=""
+GROUPME_API_URL="https://api.groupme.com/v3/bots/post"
+
+(
+   echo "To: $SYSADMIN"
+   echo "From: wbor-smtp@bowdoin.edu"
+   echo "Subject: $MSG"
+   echo ""
+   echo "Back in action!"
+) | sudo $APCUPSD_MAIL $SYSADMIN
+
+curl -s -X POST $GROUPME_API_URL \
+    -H "Content-Type: application/json" \
+    -d '{
+        "text": "!!!\n\n'"$MSG"'\n\nPower has been restored!",
+        "bot_id": "'"$MGMT_BOT_ID"'"
+    }'
+
+curl -s -X POST $GROUPME_API_URL \
+    -H "Content-Type: application/json" \
+    -d '{
+        "text": "Power is back!",
+        "bot_id": "'"$CLUBWIDE_BOT_ID"'"
+    }'
+
+exit 0
