@@ -3,11 +3,14 @@
 # This shell script if placed in /etc/apcupsd
 # will be called by /etc/apcupsd/apccontrol when the UPS
 # goes on batteries.
-# We send an email message to root to notify him.
+#
+# Send an email and GroupMe message.
 #
 
 HOSTNAME=`hostname`
 MSG="$HOSTNAME UPS - Power Failure"
+GROUPME_BOT_ID=""
+GROUPME_API_URL="https://api.groupme.com/v3/bots/post"
 #
 (
    echo "To: $SYSADMIN"
@@ -18,4 +21,12 @@ MSG="$HOSTNAME UPS - Power Failure"
    echo " "
    /sbin/apcaccess status
 ) | sudo $APCUPSD_MAIL $SYSADMIN
+
+curl -s -X POST $GROUPME_API_URL \
+    -H "Content-Type: application/json" \
+    -d '{
+        "text": "'"$MSG"'",
+        "bot_id": "'"$GROUPME_BOT_ID"'"
+    }'
+
 exit 0
