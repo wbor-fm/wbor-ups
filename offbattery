@@ -11,12 +11,25 @@ MGMT_BOT_ID=""
 CLUBWIDE_BOT_ID=""
 GROUPME_API_URL="https://api.groupme.com/v3/bots/post"
 
+if [ -f fifteen.pid ]; then
+    PID=$(cat fifteen.pid)
+    kill $PID
+    if [ $? -eq 0 ]; then
+        echo "Process $PID stopped."
+        rm fifteen.pid
+    else
+        echo "Failed to stop process $PID."
+    fi
+else
+    echo "PID file not found."
+fi
+
 (
-   echo "To: $SYSADMIN"
-   echo "From: wbor-smtp@bowdoin.edu"
-   echo "Subject: $MSG"
-   echo ""
-   echo "Back in action!"
+    echo "To: $SYSADMIN"
+    echo "From: wbor-smtp@bowdoin.edu"
+    echo "Subject: $MSG"
+    echo ""
+    echo "Back in action!"
 ) | sudo $APCUPSD_MAIL $SYSADMIN
 
 curl -s -X POST $GROUPME_API_URL \

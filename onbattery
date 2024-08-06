@@ -38,5 +38,6 @@ curl -s -X POST $GROUPME_API_URL \
     }'
 
 ./fifteen &
+echo $! > fifteen.pid # Save the PID in case it needs to be stopped prematurely
 
 exit 0

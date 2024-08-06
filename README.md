@@ -18,4 +18,4 @@ apcupsd config files are stored at `/etc/apcupsd/apcupsd.conf`, and `/etc/apcups
 
 ssmtp needs to be installed on new devices by running `sudo apt-get install ssmtp`. Its config is located at `/etc/ssmtp/ssmtp.conf` and must be configured with the relevant credentials.
 
-The primary event we’re concerned with is power loss, so we have added to the `onbattery` script at `/etc/apcupsd/onbattery`. This script emails a defined address and sends a message to our GroupMe group of station managers. To run this script manually for testing, run `sudo ./apccontrol onbattery` from `/etc/apcupsd`.
+The primary events we’re concerned with is power loss and restoration, so we have added to the `onbattery`/`offbattery` scripts at `/etc/apcupsd/`. These send an email and message to our GroupMe group of station managers. `onbattery` includes the estimated battery time remaining, and will send an update after fifteen minutes (if still on battery). To run this script manually for testing, run `sudo ./apccontrol onbattery` from `/etc/apcupsd`. `apccontrol` must have `export APCUPSD_MAIL="ssmtp"` and `export SYSADMIN={INSERT EMAIL HERE}`.
