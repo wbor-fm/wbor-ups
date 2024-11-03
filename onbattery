@@ -33,7 +33,7 @@ curl -s -X POST $GROUPME_API_URL \
 curl -s -X POST $GROUPME_API_URL \
     -H "Content-Type: application/json" \
     -d '{
-        "text": "!!!\n\nStation Power Loss\n\nIt looks like either the power has gone out at the station or something was unplugged. Battery backup will now be deployed.\n\nEstimated time remaining: '"$timeleft"'",
+        "text": "!!!\n\nStation Power Loss - Automated Message\n\nIt looks like either the power has gone out at the station or something was unplugged. Battery backup will now be deployed.\n\nEstimated time remaining: '"$timeleft"'",
         "bot_id": "'"$CLUBWIDE_BOT_ID"'"
     }'
 
