@@ -1,40 +1,48 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -o errexit -o nounset -o pipefail -o errtrace
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
+setup_logging "/var/log/wbor-ups/fifteen.log"
+set -o xtrace
+
+###############################################################################
+# fifteen
 #
-# This shell script if placed in /etc/apcupsd
-# will be called by /etc/apcupsd/apccontrol when the UPS
-# goes on batteries.
-#
+# Called 15 minutes after onbattery.
+# Sends a follow-up email, GroupMe, and Discord embed.
+###############################################################################
 
-HOSTNAME=`hostname`
-MGMT_BOT_ID=""
-CLUBWIDE_BOT_ID=""
-GROUPME_API_URL="https://api.groupme.com/v3/bots/post"
+source "$SCRIPT_DIR/discord_embed.sh"
+source "$SCRIPT_DIR/groupme.sh"
 
-# Sleep for 15 minutes (900 seconds)
-sleep 900
+: "${SYSADMIN:?Need SYSADMIN}" "${APCUPSD_MAIL:?Need APCUPSD_MAIL}"
+: "${GROUPME_API_URL:?Need GROUPME_API_URL}"
+: "${MGMT_BOT_ID:?Need MGMT_BOT_ID}" "${CLUBWIDE_BOT_ID:?Need CLUBWIDE_BOT_ID}"
 
-timeleft=$(sudo apcaccess -p TIMELEFT)
+HOSTNAME="$(hostname)"
+TIMELEFT="$(get_timeleft)"
+MSG_TITLE="$HOSTNAME UPS - 15-Min Update"
 
-(
-   echo "To: $SYSADMIN"
-   echo "From: wbor-smtp@bowdoin.edu"
-   echo "Subject: $timeleft remaining"
-   echo ""
-   echo "Estimated time remaining: $timeleft."
-) | sudo $APCUPSD_MAIL $SYSADMIN
+# Email
+{
+  echo "To: $SYSADMIN"
+  echo "From: wbor-smtp@bowdoin.edu"
+  echo "Subject: $MSG_TITLE"
+  echo ""
+  echo "Estimated time remaining: $TIMELEFT."
+} | sudo "$APCUPSD_MAIL" "$SYSADMIN" || {
+  echo "Warning: Email send failed, continuing with webhooks" >&2
+}
 
-curl -s -X POST $GROUPME_API_URL \
-    -H "Content-Type: application/json" \
-    -d '{
-        "text": "Estimated time remaining: '"$timeleft"'",
-        "bot_id": "'"$MGMT_BOT_ID"'"
-    }'
+# GroupMe - Management
+groupme_mgmt "15-Min Update: $TIMELEFT remaining"
 
-curl -s -X POST $GROUPME_API_URL \
-    -H "Content-Type: application/json" \
-    -d '{
-        "text": "Estimated time remaining: '"$timeleft"'",
-        "bot_id": "'"$CLUBWIDE_BOT_ID"'"
-    }'
+# GroupMe - Clubwide
+groupme_club "15-Min Update: $TIMELEFT remaining"
+
+# Discord embed
+fields='[{"name":"Time Left","value":"'"$TIMELEFT"'","inline":true}]'
+send_discord_embed "$MSG_TITLE" "Battery has been on for 15 minutes." "$fields"
 
 exit 0

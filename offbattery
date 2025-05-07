@@ -1,49 +1,54 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -o errexit -o nounset -o pipefail -o errtrace
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
+setup_logging "/var/log/wbor-ups/offbattery.log"
+
+###############################################################################
+# offbattery
 #
-# This shell script if placed in /etc/apcupsd
-# will be called by /etc/apcupsd/apccontrol when the    
-# UPS goes back on to the mains after a power failure.
-#
+# Called by apcupsd when UPS returns to mains.
+# Cancels pending fifteen job, then sends alerts.
+###############################################################################
 
-HOSTNAME=`hostname`
-MSG="$HOSTNAME UPS $1 Power has returned"
-MGMT_BOT_ID=""
-CLUBWIDE_BOT_ID=""
-GROUPME_API_URL="https://api.groupme.com/v3/bots/post"
+source "$SCRIPT_DIR/discord_embed.sh"
+source "$SCRIPT_DIR/groupme.sh"
 
-if [ -f fifteen.pid ]; then
-    PID=$(cat fifteen.pid)
-    kill $PID
-    if [ $? -eq 0 ]; then
-        echo "Process $PID stopped."
-        rm fifteen.pid
-    else
-        echo "Failed to stop process $PID."
-    fi
-else
-    echo "PID file not found."
-fi
+# Ensure run directory
+RUN_DIR=$(ensure_dir_or_tmp "/var/run/wbor-ups")
+PID_FILE="$RUN_DIR/fifteen.pid"
 
-(
+: "${SYSADMIN:?Need SYSADMIN}" "${APCUPSD_MAIL:?Need APCUPSD_MAIL}"
+: "${GROUPME_API_URL:?Need GROUPME_API_URL}"
+: "${MGMT_BOT_ID:?Need MGMT_BOT_ID}" "${CLUBWIDE_BOT_ID:?Need CLUBWIDE_BOT_ID}"
+
+HOSTNAME="$(hostname)"
+MSG="$HOSTNAME UPS - Power Restored"
+
+# Cancel pending follow-up
+cancel_fifteen "$RUN_DIR"
+
+# Email
+{
     echo "To: $SYSADMIN"
     echo "From: wbor-smtp@bowdoin.edu"
     echo "Subject: $MSG"
     echo ""
-    echo "Back in action!"
-) | sudo $APCUPSD_MAIL $SYSADMIN
+    echo "Power is back to mains."
+} | sudo "$APCUPSD_MAIL" "$SYSADMIN"
 
-curl -s -X POST $GROUPME_API_URL \
-    -H "Content-Type: application/json" \
-    -d '{
-        "text": "!!!\n\n'"$MSG"'\n\nPower has been restored!",
-        "bot_id": "'"$MGMT_BOT_ID"'"
-    }'
+# GroupMe - Management
+groupme_mgmt "!!!\n\n$MSG\n\nPower has been restored!"
 
-curl -s -X POST $GROUPME_API_URL \
-    -H "Content-Type: application/json" \
-    -d '{
-        "text": "Power is back!",
-        "bot_id": "'"$CLUBWIDE_BOT_ID"'"
-    }'
+# GroupMe - Clubwide
+groupme_club "Power is back!"
+
+# Discord embed
+fields='[{"name":"Host","value":"'"$HOSTNAME"'","inline":true}]'
+send_discord_embed "$MSG" "System has returned to mains power." "$fields"
+
+# Schedule 15-minute follow-up
+schedule_fifteen "$RUN_DIR" "/etc/apcupsd/fifteen"
 
 exit 0
