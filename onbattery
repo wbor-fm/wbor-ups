@@ -34,16 +34,17 @@ TIMELEFT="$(get_timeleft)"
 MSG_TITLE="UPS: $UPSNAME"
 GENERATOR_DESC="Coles Tower backup generator"
 FOOTER="(This is an automated message from WBOR-91-1/wbor-ups, installed on device with hostname: $HOSTNAME)"
+TS="[$(timestamp)]"
 
 # Email
 send_email "UPS Power Loss: $UPSNAME" \
-    "Battery backup deployed. Estimated time remaining: $TIMELEFT.\n\nNote: may coincide with generator startup, take it with a grain of salt.\n\n$FOOTER"
+    "Battery backup deployed. Estimated time remaining: $TIMELEFT.\n\nNote: may coincide with generator startup, take it with a grain of salt.\n\n$FOOTER\n\n$TS"
 
 # GroupMe - Management
-groupme_mgmt "WARNING: Station Power Loss\n\n$MSG_TITLE\nEstimated time remaining: $TIMELEFT\n\nNote: This alert may occur during $GENERATOR_DESC startup; take it with a grain of salt.\n\n$FOOTER"
+groupme_mgmt "WARNING: Station Power Loss\n\n$MSG_TITLE\nEstimated time remaining: $TIMELEFT\n\nNote: This alert may occur during $GENERATOR_DESC startup; take it with a grain of salt.\n\n$FOOTER\n\n$TS"
 
 # GroupMe - Clubwide
-groupme_club "WARNING: Station Power Loss\n\nBattery backup activated.\n\nEstimated time remaining: $TIMELEFT\n\nNote: This alert may occur during $GENERATOR_DESC startup; take it with a grain of salt.\n\nA warning will be sent in 15 minutes if the power is still out, at which point we recommend packing up and leaving."
+groupme_club "WARNING: Station Power Loss\n\nBattery backup activated.\n\nEstimated time remaining: $TIMELEFT\n\nNote: This alert may occur during $GENERATOR_DESC startup; take it with a grain of salt.\n\nA warning will be sent in 15 minutes if the power is still out, at which point we recommend packing up and leaving.\n\n$TS"
 
 # Discord embed
 fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"Estimated Time Left","value":"'"$TIMELEFT"'","inline":true},{"name":"App Hostname","value":"'"$HOSTNAME"'","inline":true}]'

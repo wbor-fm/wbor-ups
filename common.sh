@@ -7,6 +7,10 @@ trap 'echo >&2 "[$BASH_SOURCE:$LINENO] Error $? : exiting"; exit 1' ERR
 
 # common.sh — shared utilities for wbor-ups scripts
 
+timestamp() {
+    date '+%Y-%m-%d %H:%M:%S'
+}
+
 # ensure a directory exists (700 perms) or fall back to /tmp
 # Usage: dir=$(ensure_dir_or_tmp "/var/run/wbor-ups")
 ensure_dir_or_tmp() {

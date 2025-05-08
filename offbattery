@@ -26,13 +26,17 @@ PID_FILE="$RUN_DIR/fifteen.pid"
 HOSTNAME="$(hostname)"
 
 # Cancel pending follow-up
+echo "[$(timestamp)] DEBUG: pidfile=${PID_FILE}, exists? $([ -f "$PID_FILE" ] && echo yes || echo no)" >>"$logfile"
 cancel_fifteen "$RUN_DIR"
+echo "[$(timestamp)] DEBUG: post‐cancel pidfile exists? $([ -f "$PID_FILE" ] && echo yes || echo no)" >>"$logfile"
+
+TS="[$(timestamp)]"
 
 # Email
 send_email "UPS Power Restored: $UPSNAME" \
-    "Power appears to have been restored and is back to mains."
+    "Power appears to have been restored and is back to mains at $TS."
 
-MSG="UPDATE:\n\nPower (appears to be) back in the broadcast booth!"
+MSG="UPDATE:\n\nPower (appears to be) back in the broadcast booth!\n\n$TS"
 
 # GroupMe - Management and Clubwide
 groupme_mgmt "$MSG"

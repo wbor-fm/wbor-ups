@@ -22,12 +22,13 @@ source "$SCRIPT_DIR/groupme.sh"
 HOSTNAME="$(hostname)"
 TIMELEFT="$(get_timeleft)"
 MSG_TITLE="UPS: $UPSNAME"
+TS="[$(timestamp)]"
 
 # Email
-send_email "UPS: $UPSNAME - 15-Minute Update" \
-  "Estimated time remaining: $TIMELEFT."
+send_email "UPS 15-Minute Update ($UPSNAME)" \
+  "Estimated time remaining: $TIMELEFT.\n\n$TS"
 
-MSG="Station Power Loss - 15-Minute Update:\n\n$TIMELEFT remaining"
+MSG="Station Power Loss - 15-Minute Update:\n\n$TIMELEFT remaining (as of $TS)"
 
 # GroupMe - Management and Clubwide
 groupme_mgmt "$MSG"
