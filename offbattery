@@ -24,23 +24,22 @@ PID_FILE="$RUN_DIR/fifteen.pid"
 : "${MGMT_BOT_ID:?Need MGMT_BOT_ID}" "${CLUBWIDE_BOT_ID:?Need CLUBWIDE_BOT_ID}"
 
 HOSTNAME="$(hostname)"
-MSG_TITLE="$HOSTNAME UPS - Power Restored"
 
 # Cancel pending follow-up
 cancel_fifteen "$RUN_DIR"
 
 # Email
-send_email "UPS: $UPSNAME - Power Restored" \
-    "Power is back to mains."
+send_email "UPS Power Restored: $UPSNAME" \
+    "Power appears to have been restored and is back to mains."
 
-MSG="Power (appears to be) back in the broadcast booth!"
+MSG="UPDATE:\n\nPower (appears to be) back in the broadcast booth!"
 
 # GroupMe - Management and Clubwide
 groupme_mgmt "$MSG"
 groupme_club "$MSG"
 
 # Discord embed
-fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"Host","value":"'"$HOSTNAME"'","inline":true}]'
+fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"App Hostname","value":"'"$HOSTNAME"'","inline":true}]'
 send_discord_embed "Station Power Restored" "Broadcast booth appears to have returned to mains power." "$fields"
 
 exit 0

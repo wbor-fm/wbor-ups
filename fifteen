@@ -34,7 +34,7 @@ groupme_mgmt "$MSG"
 groupme_club "$MSG"
 
 # Discord embed
-fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"Estimated Time Left","value":"'"$TIMELEFT"'","inline":true},{"name":"Hostname","value":"'"$HOSTNAME"'","inline":true}]'
+fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"Estimated Time Left","value":"'"$TIMELEFT"'","inline":true},{"name":"App Hostname","value":"'"$HOSTNAME"'","inline":true}]'
 send_discord_embed "Station Power Failure - 15-Minute Update" "Battery has been on for 15 minutes." "$fields"
 
 exit 0
