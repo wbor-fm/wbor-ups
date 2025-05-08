@@ -33,7 +33,7 @@ HOSTNAME="$(hostname)"
 TIMELEFT="$(get_timeleft)"
 MSG_TITLE="UPS: $UPSNAME"
 GENERATOR_DESC="Coles Tower backup generator"
-FOOTER="(This is an automated message from wbor-ups, installed on device with hostname: $HOSTNAME)"
+FOOTER="(This is an automated message from WBOR-91-1/wbor-ups, installed on device with hostname: $HOSTNAME)"
 
 # Email
 send_email "UPS: $UPSNAME - Power Loss" \
@@ -43,7 +43,7 @@ send_email "UPS: $UPSNAME - Power Loss" \
 groupme_mgmt "WARNING: Station Power Loss\n\n$MSG_TITLE\nEstimated time remaining: $TIMELEFT\n\nNote: This alert may occur during $GENERATOR_DESC startup; take it with a grain of salt.\n\n$FOOTER"
 
 # GroupMe - Clubwide
-groupme_club "WARNING: Station Power Loss\n\nBattery backup activated.\n\Estimated time remaining: $TIMELEFT\n\nNote: This alert may occur during $GENERATOR_DESC startup; take it with a grain of salt. A warning will be sent in 15 minutes if the power is still out, at which point we recommend packing up and leaving."
+groupme_club "WARNING: Station Power Loss\n\nBattery backup activated.\n\nEstimated time remaining: $TIMELEFT\n\nNote: This alert may occur during $GENERATOR_DESC startup; take it with a grain of salt. A warning will be sent in 15 minutes if the power is still out, at which point we recommend packing up and leaving."
 
 # Discord embed
 fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"Estimated Time Left","value":"'"$TIMELEFT"'","inline":true},{"name":"Hostname","value":"'"$HOSTNAME"'","inline":true}]'

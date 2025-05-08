@@ -72,15 +72,13 @@ cancel_fifteen() {
 }
 
 send_email() {
-    local subject="$1"
-    local body="$2"
+    local subject="$1" body="$2" from="${3:-wbor-smtp@bowdoin.edu}"
 
     {
         echo "To: $SYSADMIN"
-        echo "From: $FROM_EMAIL"
+        echo "From: $from"
         echo "Subject: $subject"
         echo ""
         echo -e "$body"
-    } | sudo "$APCUPSD_MAIL" "$SYSADMIN" ||
-        echo "Warning: email send failed for '$subject'" >&2
+    } | sudo $APCUPSD_MAIL "$SYSADMIN"
 }

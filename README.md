@@ -21,7 +21,7 @@ A follow-up alert is sent 15 minutes into power loss.
 1. **Raspberry Pi** (any model with network & USB). Read this to see [how to put a Raspberry Pi on a campus (Wi-Fi) network](https://gist.github.com/mdrxy/ddb2ad2b958e5a3266d7cc05cf93c3e3), if needed.
 2. **UPS with a COM/USB port.** Most do, but check the specs if unsure. (As indicated by the name, most APC brand UPSes have a COM port.)
 3. **apcupsd**: [Info on installing & setting up](https://gist.github.com/mdrxy/462be21338a454c659b54d274fdc4456). Make sure to set your UPSNAME to something that helps you identify it if you have multiple UPSes. If installed correctly, you should be able to check the UPS status via the Pi's command line by running: `sudo apcaccess`
-4. **ssmtp or msmtp** (for outbound email)
+4. **msmtp** (for outbound email)
 5. **curl** (for HTTP API calls). Raspbian almost always includes curl by default, but in case you need to install it, you can use: `sudo apt-get update && sudo apt-get install -y curl`
 6. **Discord Webhook** for embed notifications. [Instructions here on how to set one up in your server's channel](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
 
@@ -55,7 +55,7 @@ In each UPS Pi's `/etc/apcupsd/apccontrol` and `/etc/apcupsd/config`, set the fo
   # /etc/apcupsd/apccontrol
   # These exist by default, but you may want to change them
   SYSADMIN="wbor@bowdoin.edu"  # Email recipient
-  APCUPSD_MAIL="ssmtp"  # Mail transport agent
+  APCUPSD_MAIL="msmtp"  # Mail transport agent
 
   # /etc/apcupsd/config
   # These are the new variables you need to set, add these lines to the file
@@ -68,8 +68,6 @@ In each UPS Pi's `/etc/apcupsd/apccontrol` and `/etc/apcupsd/config`, set the fo
   ```
 
 By placing the exports in `/etc/apcupsd/config`, apcupsd will source them before invoking **onbattery**, **offbattery**, and **fifteen** scripts.
-
-If you are using msmtp, be sure to change the `APCUPSD_MAIL` variable to `msmtp` instead of `ssmtp`.
 
 ## Scripts & Usage
 
