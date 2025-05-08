@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -o errexit -o nounset -o pipefail -o errtrace
+set -o errexit -o nounset -o pipefail -o errtrace -o xtrace
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
@@ -8,7 +8,7 @@ setup_logging "/var/log/wbor-ups/offbattery.log"
 ###############################################################################
 # offbattery
 #
-# Called by apcupsd when UPS returns to mains.
+# Called by apcupsd when UPS returns to mains power.
 # Cancels pending fifteen job, then sends alerts.
 ###############################################################################
 
@@ -24,31 +24,23 @@ PID_FILE="$RUN_DIR/fifteen.pid"
 : "${MGMT_BOT_ID:?Need MGMT_BOT_ID}" "${CLUBWIDE_BOT_ID:?Need CLUBWIDE_BOT_ID}"
 
 HOSTNAME="$(hostname)"
-MSG="$HOSTNAME UPS - Power Restored"
+MSG_TITLE="$HOSTNAME UPS - Power Restored"
 
 # Cancel pending follow-up
 cancel_fifteen "$RUN_DIR"
 
 # Email
-{
-    echo "To: $SYSADMIN"
-    echo "From: wbor-smtp@bowdoin.edu"
-    echo "Subject: $MSG"
-    echo ""
-    echo "Power is back to mains."
-} | sudo "$APCUPSD_MAIL" "$SYSADMIN"
+send_email "UPS: $UPSNAME - Power Restored" \
+    "Power is back to mains."
 
-# GroupMe - Management
-groupme_mgmt "!!!\n\n$MSG\n\nPower has been restored!"
+MSG="Power (appears to be) back in the broadcast booth!"
 
-# GroupMe - Clubwide
-groupme_club "Power is back!"
+# GroupMe - Management and Clubwide
+groupme_mgmt "$MSG"
+groupme_club "$MSG"
 
 # Discord embed
-fields='[{"name":"Host","value":"'"$HOSTNAME"'","inline":true}]'
-send_discord_embed "$MSG" "System has returned to mains power." "$fields"
-
-# Schedule 15-minute follow-up
-schedule_fifteen "$RUN_DIR" "/etc/apcupsd/fifteen"
+fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"Host","value":"'"$HOSTNAME"'","inline":true}]'
+send_discord_embed "Station Power Restored" "Broadcast booth appears to have returned to mains power." "$fields"
 
 exit 0

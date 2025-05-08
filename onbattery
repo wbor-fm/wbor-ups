@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -o errexit -o nounset -o pipefail -o errtrace
+set -o errexit -o nounset -o pipefail -o errtrace -o xtrace
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
@@ -8,7 +8,7 @@ setup_logging "/var/log/wbor-ups/onbattery.log"
 ###############################################################################
 # onbattery
 #
-# Called by apcupsd when UPS switches to battery.
+# Called by apcupsd when UPS switches to battery backup.
 # Sends alerts and schedules fifteen.
 ###############################################################################
 
@@ -22,7 +22,6 @@ PID_FILE="$RUN_DIR/fifteen.pid"
 : "${SYSADMIN:?Need SYSADMIN}" "${APCUPSD_MAIL:?Need APCUPSD_MAIL}"
 : "${GROUPME_API_URL:?Need GROUPME_API_URL}"
 : "${MGMT_BOT_ID:?Need MGMT_BOT_ID}" "${CLUBWIDE_BOT_ID:?Need CLUBWIDE_BOT_ID}"
-: "${GENERATOR_DESC:="the building's backup generator"}"
 
 # Avoid duplicate scheduling
 if [[ -f "$PID_FILE" && $(kill -0 "$(cat "$PID_FILE")" 2>/dev/null) ]]; then
@@ -32,30 +31,23 @@ fi
 
 HOSTNAME="$(hostname)"
 TIMELEFT="$(get_timeleft)"
-MSG_TITLE="$HOSTNAME UPS - Power Failure"
+MSG_TITLE="UPS: $UPSNAME"
+GENERATOR_DESC="Coles Tower backup generator"
+FOOTER="(This is an automated message from wbor-ups, installed on device with hostname: $HOSTNAME)"
 
 # Email
-{
-    echo "To: $SYSADMIN"
-    echo "From: wbor-smtp@bowdoin.edu"
-    echo "Subject: $MSG_TITLE"
-    echo ""
-    echo "Battery backup deployed. Estimated time remaining: $TIMELEFT."
-    echo ""
-    echo "Note: This alert may occur during $GENERATOR_DESC startup; take it with a grain of salt."
-} | sudo "$APCUPSD_MAIL" "$SYSADMIN" || {
-    echo "Warning: Email send failed, continuing with webhooks" >&2
-}
+send_email "UPS: $UPSNAME - Power Loss" \
+    "Battery backup deployed. Estimated time remaining: $TIMELEFT.\n\nNote: may coincide with generator startup, take it with a grain of salt.\n\n$FOOTER"
 
 # GroupMe - Management
-groupme_mgmt "!!!\n\n$MSG_TITLE\nEstimated time: $TIMELEFT\n\nNote: This alert may occur during $GENERATOR_DESC startup; take it with a grain of salt."
+groupme_mgmt "WARNING: Station Power Loss\n\n$MSG_TITLE\nEstimated time remaining: $TIMELEFT\n\nNote: This alert may occur during $GENERATOR_DESC startup; take it with a grain of salt.\n\n$FOOTER"
 
 # GroupMe - Clubwide
-groupme_club "Station Power Loss\nBattery backup. Time left: $TIMELEFT\n\nNote: This alert may occur during $GENERATOR_DESC startup; take it with a grain of salt."
+groupme_club "WARNING: Station Power Loss\n\nBattery backup activated.\n\Estimated time remaining: $TIMELEFT\n\nNote: This alert may occur during $GENERATOR_DESC startup; take it with a grain of salt. A warning will be sent in 15 minutes if the power is still out, at which point we recommend packing up and leaving."
 
 # Discord embed
-fields='[{"name":"Host","value":"'"$HOSTNAME"'","inline":true},{"name":"Time Left","value":"'"$TIMELEFT"'","inline":true}]'
-send_discord_embed "$MSG_TITLE" "Battery backup active." "$fields"
+fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"Estimated Time Left","value":"'"$TIMELEFT"'","inline":true},{"name":"Hostname","value":"'"$HOSTNAME"'","inline":true}]'
+send_discord_embed "Station Power Failure" "Battery backup is now active.\n\n**Note:** This alert may occur during $GENERATOR_DESC startup; take it with a grain of salt." "$fields"
 
 schedule_fifteen "$RUN_DIR" "/etc/apcupsd/fifteen"
 

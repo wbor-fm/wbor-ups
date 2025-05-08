@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
-set -o errexit -o nounset -o pipefail -o errtrace
+set -o errexit -o nounset -o pipefail -o errtrace -o xtrace
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 setup_logging "/var/log/wbor-ups/fifteen.log"
-set -o xtrace
 
 ###############################################################################
 # fifteen
 #
 # Called 15 minutes after onbattery.
-# Sends a follow-up email, GroupMe, and Discord embed.
+# Sends a follow-up email, GroupMe, and Discord embed with time remaining.
 ###############################################################################
 
 source "$SCRIPT_DIR/discord_embed.sh"
@@ -22,27 +21,20 @@ source "$SCRIPT_DIR/groupme.sh"
 
 HOSTNAME="$(hostname)"
 TIMELEFT="$(get_timeleft)"
-MSG_TITLE="$HOSTNAME UPS - 15-Min Update"
+MSG_TITLE="UPS: $UPSNAME"
 
 # Email
-{
-  echo "To: $SYSADMIN"
-  echo "From: wbor-smtp@bowdoin.edu"
-  echo "Subject: $MSG_TITLE"
-  echo ""
-  echo "Estimated time remaining: $TIMELEFT."
-} | sudo "$APCUPSD_MAIL" "$SYSADMIN" || {
-  echo "Warning: Email send failed, continuing with webhooks" >&2
-}
+send_email "UPS: $UPSNAME - 15-Minute Update" \
+  "Estimated time remaining: $TIMELEFT."
 
-# GroupMe - Management
-groupme_mgmt "15-Min Update: $TIMELEFT remaining"
+MSG="Station Power Loss - 15-Minute Update:\n\n$TIMELEFT remaining"
 
-# GroupMe - Clubwide
-groupme_club "15-Min Update: $TIMELEFT remaining"
+# GroupMe - Management and Clubwide
+groupme_mgmt "$MSG"
+groupme_club "$MSG"
 
 # Discord embed
-fields='[{"name":"Time Left","value":"'"$TIMELEFT"'","inline":true}]'
-send_discord_embed "$MSG_TITLE" "Battery has been on for 15 minutes." "$fields"
+fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"Estimated Time Left","value":"'"$TIMELEFT"'","inline":true},{"name":"Hostname","value":"'"$HOSTNAME"'","inline":true}]'
+send_discord_embed "Station Power Failure - 15-Minute Update" "Battery has been on for 15 minutes." "$fields"
 
 exit 0

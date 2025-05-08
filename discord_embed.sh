@@ -18,7 +18,10 @@ send_discord_embed() {
     "description": "$desc",
     "color": $color,
     "timestamp": "$ts",
-    "fields": $fields_json
+    "fields": $fields_json,
+    "footer": {
+      "text": "Powered by WBOR-91-1/wbor-ups",
+    }
   }]
 }
 EOF

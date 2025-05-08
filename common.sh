@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-set -o errtrace
+set -o errexit -o nounset -o pipefail -o errtrace -o xtrace
 trap 'echo >&2 "[$BASH_SOURCE:$LINENO] Error $? : exiting"; exit 1' ERR
+
+: "${FROM_EMAIL:?Need FROM_EMAIL}" "${SYSADMIN:?Need SYSADMIN}"
+: "${APCUPSD_MAIL:?Need APCUPSD_MAIL}"
 
 # common.sh — shared utilities for wbor-ups scripts
 
@@ -66,4 +69,18 @@ cancel_fifteen() {
         kill "$(cat "$pidfile")" &>/dev/null || true
         rm -f "$pidfile"
     fi
+}
+
+send_email() {
+    local subject="$1"
+    local body="$2"
+
+    {
+        echo "To: $SYSADMIN"
+        echo "From: $FROM_EMAIL"
+        echo "Subject: $subject"
+        echo ""
+        echo -e "$body"
+    } | sudo "$APCUPSD_MAIL" "$SYSADMIN" ||
+        echo "Warning: email send failed for '$subject'" >&2
 }
