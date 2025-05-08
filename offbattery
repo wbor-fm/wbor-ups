@@ -3,7 +3,9 @@ set -o errexit -o nounset -o pipefail -o errtrace -o xtrace
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
-setup_logging "/var/log/wbor-ups/offbattery.log"
+# Define a global log path, then tee into it
+LOGFILE="/var/log/wbor-ups/offbattery.log"
+setup_logging "$LOGFILE"
 
 ###############################################################################
 # offbattery
@@ -26,9 +28,9 @@ PID_FILE="$RUN_DIR/fifteen.pid"
 HOSTNAME="$(hostname)"
 
 # Cancel pending follow-up
-echo "[$(timestamp)] DEBUG: pidfile=${PID_FILE}, exists? $([ -f "$PID_FILE" ] && echo yes || echo no)" >>"$logfile"
+echo "[$(timestamp)] DEBUG: pidfile=${PID_FILE}, exists? $([ -f "$PID_FILE" ] && echo yes || echo no)" >>"$LOGFILE"
 cancel_fifteen "$RUN_DIR"
-echo "[$(timestamp)] DEBUG: post‐cancel pidfile exists? $([ -f "$PID_FILE" ] && echo yes || echo no)" >>"$logfile"
+echo "[$(timestamp)] DEBUG: post‐cancel pidfile exists? $([ -f "$PID_FILE" ] && echo yes || echo no)" >>"$LOGFILE"
 
 TS="[$(timestamp)]"
 

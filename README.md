@@ -101,3 +101,45 @@ Then you can simply run:
 sudo apccontrol onbattery UPS-2
 sudo apccontrol offbattery UPS-2
 ```
+
+### Logs & Debugging
+
+All hook‐scripts write to `/var/log/wbor-ups/*.log`, and apcupsd itself logs to `/var/log/apcupsd.events`. Use these commands to watch them in real time:
+
+```sh
+# Hook logs
+sudo tail -f /var/log/wbor-ups/onbattery.log \
+            /var/log/wbor-ups/fifteen.log \
+            /var/log/wbor-ups/offbattery.log
+
+# Core apcupsd events
+sudo tail -f /var/log/apcupsd.events
+```
+
+If you're using msmtp, its log file is at `/var/log/msmtp.log` (make sure it's world-readable or sudo chown root:root), so:
+
+```sh
+sudo tail -f /var/log/msmtp.log
+```
+
+Debugging the 15-minute cancellation: In `offbattery.log` you'll already see lines like:
+
+```sh
+[2025-05-08 17:53:27] DEBUG: pidfile=/var/run/wbor-ups/fifteen.pid, exists? yes
+[2025-05-08 17:53:27] DEBUG: post-cancel pidfile exists? no
+```
+
+If you don't see those, it means the `offbattery` hook either isn't running or is bailing out before that point. You can verify the hook ran:
+
+```sh
+ps aux | grep "[s]leep 900"      # should show the fifteen‐script sleeper
+sudo grep cancel_fifteen /var/log/wbor-ups/offbattery.log
+```
+
+Dump the env apcupsd sees:
+
+```sh
+sudo /etc/apcupsd/apccontrol onbattery UPSNAME 2>&1 | tee ~/apcupsd_env_dump.txt
+```
+
+Check that $UPSNAME, $APCUPSD_MAIL, etc. are all set.
