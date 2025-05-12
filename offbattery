@@ -39,11 +39,9 @@ TS="[$(timestamp)]"
 send_email "UPS Power Restored: $UPSNAME" \
     "Power appears to have been restored and is back to mains at $TS for UPS $UPSNAME."
 
-MSG="UPDATE:\n\nPower (appears to be) back for UPS $UPSNAME!\n\n$TS"
-
 # GroupMe - Management and Clubwide
-groupme_mgmt "$MSG"
-groupme_club "$MSG"
+groupme_mgmt "UPDATE:\n\nPower (appears to be) back for UPS $UPSNAME!\n\n$TS"
+groupme_club "UPDATE:\n\nPower (appears to be) back in the studio!\n\n$TS"
 
 # Discord embed
 fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"App Hostname","value":"'"$HOSTNAME"'","inline":true}]'
