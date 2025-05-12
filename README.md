@@ -2,17 +2,18 @@
 
 ## UPS Monitoring & Alerts
 
-Automatically monitor UPS status using apcupsd on a Raspberry Pi, send email, GroupMe, and Discord embed notifications on power events (on/off).
+Automatically monitor UPS status using apcupsd on a Raspberry Pi, send email, GroupMe, Discord embed, and RabbitMQ notifications on power events (on/off).
 
 ## Overview
 
 WBOR uses uninterrupted power supplies (UPS) to keep broadcast equipment powered during outages. Each UPS exposes status data (remaining battery life, health, load) via a COM port. We run [apcupsd](https://www.apcupsd.org/) on a Raspberry Pi to:
 
-- **Trigger scripts** on power-loss (`onbattery`) and power-restore (`offbattery`) events  
+- **Trigger scripts** on power-loss (`onbattery`) and power-restore (`offbattery`) events
 - **Send alerts** via:
-  - Email (to station managers)  
-  - GroupMe bots (to management + clubwide channels)  
+  - Email (to station managers)
+  - GroupMe bots (to management + clubwide channels)
   - Discord embeds (rich notifications -- also for members of management)
+  - RabbitMQ messages (for integration with other services, using routing keys `notification.ups.onbattery`, `notification.ups.offbattery`, `notification.ups.fifteen`)
 
 A follow-up alert is sent 15 minutes into power loss.
 
@@ -24,6 +25,12 @@ A follow-up alert is sent 15 minutes into power loss.
 4. **msmtp** (for outbound email)
 5. **curl** (for HTTP API calls). Raspbian almost always includes curl by default, but in case you need to install it, you can use: `sudo apt-get update && sudo apt-get install -y curl`
 6. **Discord Webhook** for embed notifications. [Instructions here on how to set one up in your server's channel](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
+7. **RabbitMQ Server**: A running instance of RabbitMQ. You'll need to ensure an exchange (e.g., a topic exchange) is set up for the messages.
+8. **amqp-tools**: Command-line utilities for interacting with AMQP servers like RabbitMQ. Install on Debian/Ubuntu with:
+
+    ```sh
+    sudo apt-get update && sudo apt-get install -y amqp-tools
+    ```
 
 ## Installation
 
@@ -63,7 +70,7 @@ In each UPS Pi's `/etc/apcupsd/apccontrol` and `/etc/apcupsd/config`, set the fo
   export GROUPME_API_URL="https://api.groupme.com/v3/bots/post"
   export MGMT_BOT_ID="YOUR_MGMT_BOT_ID"
   export CLUBWIDE_BOT_ID="YOUR_CLUBWIDE_BOT_ID"
-  export DISCORD_WEBHOOK_URL="<https://discord.com/api/webhooks/…>"
+  export DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/"
   export FROM_EMAIL="wbor-smtp@bowdoin.edu"  # Email sender address
   ```
 
@@ -75,7 +82,7 @@ By placing the exports in `/etc/apcupsd/config`, apcupsd will source them before
 - **fifteen**: 15-minute follow-up script that runs on mains restoration
 - **offbattery**: This script runs when the UPS goes back onto mains power (restoration).
 
-All send email, GroupMe, and Discord embeds; `onbattery` schedules `fifteen`, and `offbattery` cancels it if still pending.
+All send email, GroupMe, Discord embeds, and RabbitMQ messages; `onbattery` schedules `fifteen`, and `offbattery` cancels it if still pending.
 
 ## Testing
 
@@ -87,7 +94,7 @@ You should **not** invoke the scripts directly with `sudo ./onbattery`, because 
   sudo /etc/apcupsd/apccontrol offbattery UPS-2
   ```
 
-Check mail, GroupMe channels, and your Discord webhook channel for embeds.
+Check mail, GroupMe channels, your Discord webhook channel for embeds, and your RabbitMQ queues for messages.
 
 If you prefer to call `apccontrol` directly, you can symlink it into a directory in your `sudo` secure_path:
 
@@ -142,4 +149,4 @@ Dump the env apcupsd sees:
 sudo /etc/apcupsd/apccontrol onbattery UPSNAME 2>&1 | tee ~/apcupsd_env_dump.txt
 ```
 
-Check that $UPSNAME, $APCUPSD_MAIL, etc. are all set.
+Check that $UPSNAME, $APCUPSD_MAIL, $RABBITMQ_URL, etc. are all set.

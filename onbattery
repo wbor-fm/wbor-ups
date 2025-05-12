@@ -22,10 +22,11 @@ PID_FILE="$RUN_DIR/fifteen.pid"
 : "${SYSADMIN:?Need SYSADMIN}" "${APCUPSD_MAIL:?Need APCUPSD_MAIL}"
 : "${GROUPME_API_URL:?Need GROUPME_API_URL}"
 : "${MGMT_BOT_ID:?Need MGMT_BOT_ID}" "${CLUBWIDE_BOT_ID:?Need CLUBWIDE_BOT_ID}"
+# UPSNAME, RABBITMQ_URL, RABBITMQ_EXCHANGE are checked in common.sh
 
 # Avoid duplicate scheduling
-if [[ -f "$PID_FILE" && $(kill -0 "$(cat "$PID_FILE")" 2>/dev/null) ]]; then
-    echo "15-Min follow-up already scheduled (PID $(cat "$PID_FILE")). Exiting."
+if [[ -f "$PID_FILE" && $(pgrep -F "$PID_FILE" 2>/dev/null) ]]; then # Check if process with PID from file is running
+    echo "[$(timestamp)] 15-Min follow-up already scheduled (PID $(cat "$PID_FILE")). Exiting."
     exit 0
 fi
 
@@ -49,6 +50,11 @@ groupme_club "WARNING: Station Power Loss\n\nBattery backup activated.\n\nEstima
 # Discord embed
 fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"Estimated Time Left","value":"'"$TIMELEFT"'","inline":true},{"name":"App Hostname","value":"'"$HOSTNAME"'","inline":true}]'
 send_discord_embed "Station Power Failure" "Battery backup is now active.\n\n**Note:** This alert may occur during $GENERATOR_DESC startup; take it with a grain of salt." "$fields"
+
+# RabbitMQ Notification
+rabbitmq_event_message="UPS $UPSNAME on battery power. Estimated time remaining: $TIMELEFT."
+rabbitmq_data_fields='"timeleft":"'"$TIMELEFT"'","message":"'"$(echo "$rabbitmq_event_message" | sed 's/"/\\"/g')"'","status":"onbattery"'
+publish_rabbitmq_event "notification.ups.onbattery" "onbattery" "$HOSTNAME" "$rabbitmq_data_fields"
 
 schedule_fifteen "$RUN_DIR" "/etc/apcupsd/fifteen"
 

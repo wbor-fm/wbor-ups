@@ -9,7 +9,8 @@ setup_logging "/var/log/wbor-ups/fifteen.log"
 # fifteen
 #
 # Called 15 minutes after onbattery.
-# Sends a follow-up email, GroupMe, and Discord embed with time remaining.
+# Sends a follow-up email, GroupMe, Discord embed, and RabbitMQ message with
+# time remaining.
 ###############################################################################
 
 source "$SCRIPT_DIR/discord_embed.sh"
@@ -18,6 +19,7 @@ source "$SCRIPT_DIR/groupme.sh"
 : "${SYSADMIN:?Need SYSADMIN}" "${APCUPSD_MAIL:?Need APCUPSD_MAIL}"
 : "${GROUPME_API_URL:?Need GROUPME_API_URL}"
 : "${MGMT_BOT_ID:?Need MGMT_BOT_ID}" "${CLUBWIDE_BOT_ID:?Need CLUBWIDE_BOT_ID}"
+# UPSNAME, RABBITMQ_URL, RABBITMQ_EXCHANGE are checked in common.sh
 
 HOSTNAME="$(hostname)"
 TIMELEFT="$(get_timeleft)"
@@ -26,9 +28,9 @@ TS="[$(timestamp)]"
 
 # Email
 send_email "UPS 15-Minute Update ($UPSNAME)" \
-  "Estimated time remaining: $TIMELEFT.\n\n$TS"
+  "Estimated time remaining for UPS $UPSNAME: $TIMELEFT.\n\n$TS"
 
-MSG="Station Power Loss - 15-Minute Update:\n\n$TIMELEFT remaining (as of $TS)"
+MSG="Station Power Loss - 15-Minute Update for $UPSNAME:\n\n$TIMELEFT remaining (as of $TS)"
 
 # GroupMe - Management and Clubwide
 groupme_mgmt "$MSG"
@@ -36,6 +38,11 @@ groupme_club "$MSG"
 
 # Discord embed
 fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"Estimated Time Left","value":"'"$TIMELEFT"'","inline":true},{"name":"App Hostname","value":"'"$HOSTNAME"'","inline":true}]'
-send_discord_embed "Station Power Failure - 15-Minute Update" "Battery has been on for 15 minutes." "$fields"
+send_discord_embed "Station Power Failure - 15-Minute Update" "UPS $UPSNAME has been on battery for 15 minutes." "$fields"
+
+# RabbitMQ Notification
+rabbitmq_event_message="UPS $UPSNAME on battery for 15 minutes. Estimated time remaining: $TIMELEFT."
+rabbitmq_data_fields='"timeleft":"'"$TIMELEFT"'","message":"'"$(echo "$rabbitmq_event_message" | sed 's/"/\\"/g')"'","status":"fifteen_minute_update"' # Escape quotes
+publish_rabbitmq_event "notification.ups.fifteen" "fifteen_minute_update" "$HOSTNAME" "$rabbitmq_data_fields"
 
 exit 0

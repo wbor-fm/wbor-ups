@@ -24,21 +24,22 @@ PID_FILE="$RUN_DIR/fifteen.pid"
 : "${SYSADMIN:?Need SYSADMIN}" "${APCUPSD_MAIL:?Need APCUPSD_MAIL}"
 : "${GROUPME_API_URL:?Need GROUPME_API_URL}"
 : "${MGMT_BOT_ID:?Need MGMT_BOT_ID}" "${CLUBWIDE_BOT_ID:?Need CLUBWIDE_BOT_ID}"
+# UPSNAME, RABBITMQ_URL, RABBITMQ_EXCHANGE are checked in common.sh
 
 HOSTNAME="$(hostname)"
 
 # Cancel pending follow-up
-echo "[$(timestamp)] DEBUG: pidfile=${PID_FILE}, exists? $([ -f "$PID_FILE" ] && echo yes || echo no)" >>"$LOGFILE"
+echo "[$(timestamp)] DEBUG: pidfile=${PID_FILE}, exists? $([ -f "$PID_FILE" ] && echo yes || echo no)" # Log directly to avoid setup_logging race if it fails
 cancel_fifteen "$RUN_DIR"
-echo "[$(timestamp)] DEBUG: post‐cancel pidfile exists? $([ -f "$PID_FILE" ] && echo yes || echo no)" >>"$LOGFILE"
+echo "[$(timestamp)] DEBUG: post-cancel pidfile exists? $([ -f "$PID_FILE" ] && echo yes || echo no)" # Log directly
 
 TS="[$(timestamp)]"
 
 # Email
 send_email "UPS Power Restored: $UPSNAME" \
-    "Power appears to have been restored and is back to mains at $TS."
+    "Power appears to have been restored and is back to mains at $TS for UPS $UPSNAME."
 
-MSG="UPDATE:\n\nPower (appears to be) back in the broadcast booth!\n\n$TS"
+MSG="UPDATE:\n\nPower (appears to be) back for UPS $UPSNAME!\n\n$TS"
 
 # GroupMe - Management and Clubwide
 groupme_mgmt "$MSG"
@@ -46,6 +47,11 @@ groupme_club "$MSG"
 
 # Discord embed
 fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"App Hostname","value":"'"$HOSTNAME"'","inline":true}]'
-send_discord_embed "Station Power Restored" "Broadcast booth appears to have returned to mains power." "$fields"
+send_discord_embed "Station Power Restored" "UPS $UPSNAME appears to have returned to mains power." "$fields"
+
+# RabbitMQ Notification
+rabbitmq_event_message="UPS $UPSNAME back on mains power."
+rabbitmq_data_fields='"message":"'"$(echo "$rabbitmq_event_message" | sed 's/"/\\"/g')"'","status":"offbattery"' # Escape quotes in message
+publish_rabbitmq_event "notification.ups.offbattery" "offbattery" "$HOSTNAME" "$rabbitmq_data_fields"
 
 exit 0
