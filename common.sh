@@ -75,8 +75,32 @@ cancel_fifteen() {
     local run_dir="$1"
     local pidfile="$run_dir/fifteen.pid"
     if [[ -f "$pidfile" ]]; then
-        kill "$(cat "$pidfile")" &>/dev/null || true
+        local pid_to_kill
+        pid_to_kill=$(cat "$pidfile")
+
+        # Check if pid_to_kill contains a valid positive integer
+        if [[ "$pid_to_kill" =~ ^[0-9]+$ && "$pid_to_kill" -gt 0 ]]; then
+            echo "[$(timestamp)] Attempting to cancel process group $pid_to_kill (read from $pidfile)"
+            # Attempt to kill the entire process group. The leading '-' signals to kill the PGID.
+            # stderr is redirected to stdout, then both to /dev/null, for POSIX compatibility.
+            kill -- -"$pid_to_kill" >/dev/null 2>&1 ||
+                # Fallback: If group kill failed or was not applicable (e.g., process already gone,
+                # or it's not a group leader), try to kill the specific PID directly again.
+                # This also covers shells where `kill -- -PID` might behave differently for a non-group-leader PID.
+                (echo "[$(timestamp)] Process group kill for $pid_to_kill failed or not applicable, attempting direct PID kill." &&
+                    kill "$pid_to_kill" >/dev/null 2>&1) || true # Ensure script doesn't exit on error
+        elif [[ -n "$pid_to_kill" ]]; then
+            # If pid_to_kill is not a number or not positive, but not empty,
+            # log a warning, but still attempt a simple kill as a last resort.
+            echo "[$(timestamp)] Warning: PID in $pidfile ('$pid_to_kill') is not a valid positive integer. Attempting direct kill." >&2
+            kill "$pid_to_kill" >/dev/null 2>&1 || true
+        else
+            # pidfile was empty or cat failed to read (though -f check should prevent empty cat if file exists and is readable)
+            echo "[$(timestamp)] Warning: PID file $pidfile was empty or unreadable after initial check." >&2
+        fi
         rm -f "$pidfile"
+    else
+        echo "[$(timestamp)] PID file $pidfile not found. No cancellation attempted."
     fi
 }
 
