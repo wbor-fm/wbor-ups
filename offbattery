@@ -37,18 +37,18 @@ TS="[$(timestamp)]"
 
 # Email
 send_email "UPS Power Restored: $UPSNAME" \
-    "Power appears to have been restored and is back to mains at $TS for UPS $UPSNAME."
+    "Power appears to have been restored and is back to mains at $TS for UPS $($UPSNAME)."
 
 # GroupMe - Management and Clubwide
-groupme_mgmt "UPDATE:\n\nPower (appears to be) back for UPS $UPSNAME!\n\n$TS"
+groupme_mgmt "UPDATE:\n\nPower (appears to be) back for UPS $($UPSNAME)!\n\n$TS"
 groupme_club "UPDATE:\n\nPower (appears to be) back in the studio!\n\n$TS"
 
 # Discord embed
 fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"App Hostname","value":"'"$HOSTNAME"'","inline":true}]'
-send_discord_embed "Station Power Restored" "UPS $UPSNAME appears to have returned to mains power." "$fields"
+send_discord_embed "Station Power Restored" "UPS $($UPSNAME) appears to have returned to mains power." "$fields"
 
 # RabbitMQ Notification
-rabbitmq_event_message="UPS $UPSNAME back on mains power."
+rabbitmq_event_message="UPS $($UPSNAME) back on mains power."
 rabbitmq_data_fields='"message":"'"$(echo "$rabbitmq_event_message" | sed 's/"/\\"/g')"'","status":"offbattery"' # Escape quotes in message
 publish_rabbitmq_event "notification.ups.offbattery" "offbattery" "$HOSTNAME" "$rabbitmq_data_fields"
 
