@@ -83,7 +83,7 @@ cancel_fifteen() {
             echo "[$(timestamp)] Attempting to cancel process group $pid_to_kill (read from $pidfile)"
             # Attempt to kill the entire process group. The leading '-' signals to kill the PGID.
             # stderr is redirected to stdout, then both to /dev/null, for POSIX compatibility.
-            kill -- -"$pid_to_kill" >/dev/null 2>&1 ||
+            kill -- -"$pid_to_kill" ||
                 # Fallback: If group kill failed or was not applicable (e.g., process already gone,
                 # or it's not a group leader), try to kill the specific PID directly again.
                 # This also covers shells where `kill -- -PID` might behave differently for a non-group-leader PID.
