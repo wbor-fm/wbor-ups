@@ -5,7 +5,7 @@ set -o errexit -o nounset -o pipefail -o errtrace
 
 # Usage: send_discord_embed <title> <description> <fields_json> [<color>]
 send_discord_embed() {
-  local title=$1 desc=$2 fields_json=$3 color=${4:-15158332}
+  local title=$1 desc=$2 fields_json=$3 color=${4:-16711680}
   local ts payload http_code
   ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
   # Construct JSON payload

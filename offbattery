@@ -45,7 +45,7 @@ groupme_club "UPDATE:\n\nPower (appears to be) back in the studio!\n\n$TS"
 
 # Discord embed
 fields='[{"name":"UPS","value":"'"$UPSNAME"'","inline":true},{"name":"App Hostname","value":"'"$HOSTNAME"'","inline":true}]'
-send_discord_embed "Station Power Restored" "UPS $($UPSNAME) appears to have returned to mains power." "$fields"
+send_discord_embed "Station Power Restored" "UPS $($UPSNAME) appears to have returned to mains power." "$fields" "65280"
 
 # RabbitMQ Notification
 rabbitmq_event_message="UPS $($UPSNAME) back on mains power."
