@@ -58,22 +58,33 @@ get_timeleft() {
 schedule_fifteen() {
     local run_dir="$1" script="$2"
     local pidfile="$run_dir/fifteen.pid"
+    echo "[$(timestamp)] In schedule_fifteen: About to launch background task. Script to exec: $script"
     (
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] SUB-SHELL (PID $$) for fifteen: About to sleep 900. Will exec $script. My PGID: $(ps -o pgid= -p $$ --no-headers)" >>"/var/log/wbor-ups/fifteen_subshell_debug.log"
         sleep 900
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] SUB-SHELL (PID $$) for fifteen: Sleep finished. About to exec $script." >>"/var/log/wbor-ups/fifteen_subshell_debug.log"
         exec "$script"
     ) &
-    local pid=$!
+    local pid=$! # This is the PID of the subshell defined above
+    echo "[$(timestamp)] In schedule_fifteen: Background task launched. PID CAPTURED (\$!): $pid"
+    # Log details of this specific PID right after launch
+    echo "[$(timestamp)] In schedule_fifteen: ps output for captured PID $pid: [$(ps -o pid,ppid,pgid,sess,stat,args -p "$pid" --no-headers || echo "PID $pid not found by ps in schedule_fifteen")]"
+    # Also log the current script's PID for context
+    echo "[$(timestamp)] In schedule_fifteen: Current script (onbattery) PID is $$."
+
     if ! { echo "$pid" >"$pidfile"; } 2>/dev/null; then
-        echo "Warning: Cannot write PID to $pidfile, falling back to /tmp" >&2
+        echo "[$(timestamp)] Warning: Cannot write PID to $pidfile, falling back to /tmp" >&2
         pidfile="/tmp/fifteen.pid"
         echo "$pid" >"$pidfile"
     fi
     chmod 600 "$pidfile"
+    echo "[$(timestamp)] In schedule_fifteen: PID $pid written to $pidfile"
 }
 
 cancel_fifteen() {
     local run_dir="$1"
     local pidfile="$run_dir/fifteen.pid"
+    echo "[$(timestamp)] In cancel_fifteen: My PID is $$, My PGID is $(ps -o pgid= -p $$ --no-headers)" # ADD THIS
     if [[ -f "$pidfile" ]]; then
         local pid_to_kill
         pid_to_kill=$(cat "$pidfile")
