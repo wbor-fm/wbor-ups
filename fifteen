@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # DEBUGGING: Log invocation details immediately
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] FIFTEEN SCRIPT INVOKED. PID: $$, PPID: $PPID, PGID: $(ps -o pgid= -p $$), ARGS: $*" >>/var/log/wbor-ups/fifteen_invocation_debug.log
-echo "Initial process tree snapshot:" >>/var/log/wbor-ups/fifteen_invocation_debug.log
-ps auxfww >>/var/log/wbor-ups/fifteen_invocation_debug.log
-echo "---------------------------------" >>/var/log/wbor-ups/fifteen_invocation_debug.log
+FIFTEEN_INVOCATION_DEBUG_LOG="/var/log/wbor-ups/fifteen_invocation_debug.log"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] FIFTEEN SCRIPT INVOKED. PID: $$, PPID: $PPID, PGID: $(ps -o pgid= -p $$ --no-headers || echo 'pgid_lookup_failed'), ARGS: $*" >>"$FIFTEEN_INVOCATION_DEBUG_LOG"
+echo "Initial process tree snapshot (ps auxfww) for fifteen script (PID: $$):" >>"$FIFTEEN_INVOCATION_DEBUG_LOG"
+ps auxfww >>"$FIFTEEN_INVOCATION_DEBUG_LOG" 2>&1 # Capture stderr from ps too
+echo "---------------------------------" >>"$FIFTEEN_INVOCATION_DEBUG_LOG"
 
-set -o errexit -o nounset -o pipefail -o errtrace -o xtrace
+set -o errexit -o nounset -o pipefail -o errtrace
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
