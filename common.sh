@@ -102,8 +102,8 @@ schedule_fifteen() {
 cancel_fifteen() {
     local run_dir="$1"
     local pidfile="$run_dir/fifteen.pid"
-    local current_script_pid="$$"                                # PID of the script calling cancel_fifteen (e.g., offbattery)
-    local offbattery_log_file="/var/log/wbor-ups/offbattery.log" # Assuming cancel_fifteen is called by offbattery
+    local current_script_pid="$$"
+    local offbattery_log_file="/var/log/wbor-ups/offbattery.log"
 
     script_log "In cancel_fifteen (PID: $current_script_pid): My PGID is $(ps -o pgid= -p $$ --no-headers || echo 'pgid_lookup_failed')" "$offbattery_log_file"
 
@@ -117,21 +117,6 @@ cancel_fifteen() {
 
             local kill_output
             local kill_status
-            local target_pgid
-            target_pgid=$(ps -o pgid= -p "$pid_to_kill" --no-headers | tr -d ' ' || echo "pgid_lookup_failed_for_$pid_to_kill")
-
-            if [[ "$target_pgid" =~ ^[0-9]+$ && "$target_pgid" -gt 0 && "$target_pgid" != "$pid_to_kill" ]]; then # Only if PGID is valid and different from PID
-                script_log "In cancel_fifteen (PID: $current_script_pid): Target PID $pid_to_kill belongs to PGID $target_pgid. Attempting to kill PGID $target_pgid." "$offbattery_log_file"
-                kill_output=$(kill -- -"$target_pgid" 2>&1)
-                kill_status=$?
-                if [[ $kill_status -eq 0 ]]; then
-                    script_log "In cancel_fifteen (PID: $current_script_pid): Process group kill for PGID $target_pgid (of PID $pid_to_kill) SUCCEEDED. Output: [$kill_output]" "$offbattery_log_file"
-                else
-                    script_log "In cancel_fifteen (PID: $current_script_pid): Process group kill for PGID $target_pgid (of PID $pid_to_kill) FAILED (status: $kill_status). Output: [$kill_output]" "$offbattery_log_file"
-                fi
-            else
-                script_log "In cancel_fifteen (PID: $current_script_pid): PGID for target PID $pid_to_kill is '$target_pgid'. Not attempting PGID kill or PGID is same as PID." "$offbattery_log_file"
-            fi
 
             script_log "In cancel_fifteen (PID: $current_script_pid): Attempting direct SIGTERM kill for PID $pid_to_kill." "$offbattery_log_file"
             kill_output=$(kill "$pid_to_kill" 2>&1)
