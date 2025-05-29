@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+# DEBUGGING: Log invocation details immediately
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] FIFTEEN SCRIPT INVOKED. PID: $$, PPID: $PPID, PGID: $(ps -o pgid= -p $$), ARGS: $*" >>/var/log/wbor-ups/fifteen_invocation_debug.log
+echo "Initial process tree snapshot:" >>/var/log/wbor-ups/fifteen_invocation_debug.log
+ps auxfww >>/var/log/wbor-ups/fifteen_invocation_debug.log
+echo "---------------------------------" >>/var/log/wbor-ups/fifteen_invocation_debug.log
+
 set -o errexit -o nounset -o pipefail -o errtrace -o xtrace
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
