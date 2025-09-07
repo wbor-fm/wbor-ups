@@ -20,7 +20,7 @@ send_discord_embed() {
     "timestamp": "$ts",
     "fields": $fields_json,
     "footer": {
-      "text": "Powered by WBOR-91-1/wbor-ups"
+      "text": "Powered by wbor-fm/wbor-ups"
     }
   }]
 }

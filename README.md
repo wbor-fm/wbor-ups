@@ -37,7 +37,7 @@ A follow-up alert is sent 15 minutes into power loss.
 1. Clone this repo onto your Pi:
 
     ```sh
-    git clone https://github.com/WBOR-91-1-FM/wbor-ups.git ~/wbor-ups
+    git clone https://github.com/wbor-fm/wbor-ups.git ~/wbor-ups
     ```
 
 2. Enable & configure apcupsd following [these instructions](https://gist.github.com/mdrxy/462be21338a454c659b54d274fdc4456) if you haven't already.

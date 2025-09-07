@@ -34,7 +34,7 @@ HOSTNAME="$(hostname)"
 TIMELEFT="$(get_timeleft)"
 MSG_TITLE="UPS: $UPSNAME"
 GENERATOR_DESC="Coles Tower backup generator"
-FOOTER="(This is an automated message from WBOR-91-1/wbor-ups, installed on device with hostname: $HOSTNAME)"
+FOOTER="(This is an automated message from wbor-fm/wbor-ups, installed on device with hostname: $HOSTNAME)"
 TS="[$(timestamp)]"
 
 # Email
