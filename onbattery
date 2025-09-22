@@ -3,7 +3,8 @@ set -o errexit -o nounset -o pipefail -o errtrace -o xtrace
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
-setup_logging "/var/log/wbor-ups/onbattery.log"
+LOGFILE="/var/log/wbor-ups/onbattery.log"
+setup_logging "$LOGFILE"
 
 ###############################################################################
 # onbattery
@@ -23,6 +24,8 @@ PID_FILE="$RUN_DIR/fifteen.pid"
 : "${GROUPME_API_URL:?Need GROUPME_API_URL}"
 : "${MGMT_BOT_ID:?Need MGMT_BOT_ID}" "${CLUBWIDE_BOT_ID:?Need CLUBWIDE_BOT_ID}"
 # UPSNAME, RABBITMQ_URL, RABBITMQ_EXCHANGE are checked in common.sh
+
+HOSTNAME="$(hostname)"
 
 # Avoid duplicate scheduling
 if [[ -f "$PID_FILE" && $(pgrep -F "$PID_FILE" 2>/dev/null) ]]; then # Check if process with PID from file is running

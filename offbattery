@@ -3,7 +3,6 @@ set -o errexit -o nounset -o pipefail -o errtrace -o xtrace
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
-# Define a global log path, then tee into it
 LOGFILE="/var/log/wbor-ups/offbattery.log"
 setup_logging "$LOGFILE"
 
@@ -33,14 +32,18 @@ echo "[$(timestamp)] DEBUG: pidfile=${PID_FILE}, exists? $([ -f "$PID_FILE" ] &&
 cancel_fifteen "$RUN_DIR"
 echo "[$(timestamp)] DEBUG: post-cancel pidfile exists? $([ -f "$PID_FILE" ] && echo yes || echo no)" # Log directly
 
+HOSTNAME="$(hostname)"
+MSG_TITLE="UPS: $UPSNAME"
+GENERATOR_DESC="Coles Tower backup generator"
+FOOTER="(This is an automated message from wbor-fm/wbor-ups, installed on device with hostname: $HOSTNAME)"
 TS="[$(timestamp)]"
 
 # Email
 send_email "UPS Power Restored: $UPSNAME" \
-    "Power appears to have been restored and is back to mains at $TS for UPS $UPSNAME."
+    "Power appears to have been restored and is back to mains at $TS for UPS $UPSNAME.\n\n$FOOTER\n\n$TS"
 
 # GroupMe - Management and Clubwide
-groupme_mgmt "UPDATE:\n\nPower (appears to be) back for UPS $UPSNAME!\n\n$TS"
+groupme_mgmt "UPDATE:\n\nPower (appears to be) back for UPS $UPSNAME!\n\n$FOOTER\n\n$TS"
 groupme_club "UPDATE:\n\nPower (appears to be) back in the studio!\n\n$TS"
 
 # Discord embed
