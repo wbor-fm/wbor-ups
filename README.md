@@ -76,6 +76,25 @@ In each UPS Pi's `/etc/apcupsd/apccontrol` and `/etc/apcupsd/config`, set the fo
 
 By placing the exports in `/etc/apcupsd/config`, apcupsd will source them before invoking **onbattery**, **offbattery**, and **fifteen** scripts.
 
+`msmtp` configuration is in `/etc/msmtprc`. Make sure to set the correct SMTP server, port, auth method, username, and password. Example config:
+
+  ```bash
+  sudo nano /etc/msmtprc
+  ```
+
+  ```text
+  # /etc/msmtprc
+  account        ACCOUNT_NAME_GOES_HERE
+  host           ...
+  port           587
+  user           ...
+  password       ...
+  from           ...
+
+  # make "ACCOUNT_NAME_GOES_HERE" the default account
+  account default : ACCOUNT_NAME_GOES_HERE
+  ```
+
 ## Scripts & Usage
 
 - **onbattery**: This script runs when the UPS goes on battery (mains loss).
