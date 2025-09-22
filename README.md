@@ -168,4 +168,4 @@ Dump the env apcupsd sees:
 sudo /etc/apcupsd/apccontrol onbattery UPSNAME 2>&1 | tee ~/apcupsd_env_dump.txt
 ```
 
-Check that $UPSNAME, $APCUPSD_MAIL, $RABBITMQ_URL, etc. are all set.
+Check that `$UPSNAME`, `$APCUPSD_MAIL`, `$RABBITMQ_URL`, etc. are all set.
